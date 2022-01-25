@@ -13,11 +13,8 @@ class Node:
     self.edges.append(node)
 
 
-knowns = []
 targets = []
 topology = {}
-
-output = []
 
 # import nessecary things
 with open("topology.json") as json_file:
@@ -27,37 +24,51 @@ with open("known.txt") as known_file:
   known = known_file.read().splitlines()
 
 with open("target.txt") as target_file:
-  target = target_file.read().splitlines()
-
-# create nodes
-rootnode = Node("root")
-allnodes = []
-for key in topology:
-  current = Node(key)
-  for connection in topology[key]:
-    # find node if already exists
-    filterres = list(filter(lambda x: x.name == connection, allnodes))
-    if len(filterres) == 0:
-      node = Node(connection)
-    else:
-      node = filterres[0]
-    current.addEdge(node)
-
-  allnodes.append(current)
-
-for node in allnodes:
-  rootnode.addEdge(node)
+  targets = target_file.read().splitlines()
 
 
-def dep_resolve(node, resolved):
-  print(node.name)
-  for edge in node.edges:
-    dep_resolve(edge, resolved)
-  resolved.append(node)
+def findOrCreateNode(name, thelist, rootnode):
+  node = None
+  filterres = list(filter(lambda x: x.name == name, thelist))
+  if len(filterres) == 0:
+    node = Node(name)
+  else:
+    node = filterres[0]
+  return node
 
 
-# main
-resolved = []
-dep_resolve(rootnode, resolved)
-for node in resolved:
-  print(node.name, " ")
+def buildGraph(rootnode):
+  # create nodes
+  allnodes = []
+  for key in topology:
+    # find out of i already exists
+    current = findOrCreateNode(key, allnodes, rootnode)
+    for connection in topology[key]:
+      # find node if already exists
+      node = findOrCreateNode(connection, allnodes, rootnode)
+      current.addEdge(node)
+
+    allnodes.append(current)
+  return allnodes
+
+
+rootnode = Node("0")
+graph = buildGraph(rootnode)
+
+resolved = [rootnode.name]
+
+while len(targets) > 0:
+  for t in targets:
+    targetNode = list(filter(lambda x: x.name == t, graph))[0]
+    allEdgedResolved = True
+
+    for edge in targetNode.edges:
+      if edge.name not in resolved:
+        allEdgedResolved = False
+        break
+
+    if allEdgedResolved:
+      resolved.append(t)
+      targets.remove(t)
+
+print(":D")
