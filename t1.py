@@ -82,8 +82,16 @@ def d2(targets):
 # node = list(filter(lambda x: x.name == "会", graph))[0]
 res = d2(targets)
 
+
+l1 = list(map(lambda x: x.name, res))
+l2 = list(filter(lambda x: x not in known, map(lambda x: x.name, res)))
+
+
 print("Whole order:")
-print(list(map(lambda x: x.name, res)))
+print(l1)
 
 print("New ones:")
-print(list(filter(lambda x: x not in known, map(lambda x: x.name, res))))
+print(l2)
+
+print("You have to learn:" + str(len(l2)) +
+      ", you already knew:" + str(len(l1) - len(l2)))
