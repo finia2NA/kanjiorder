@@ -1,7 +1,5 @@
-# Parts of this code were adapted from:
-# https://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html
-
 import json
+from functools import reduce
 
 
 class Node:
@@ -27,7 +25,7 @@ with open("target.txt") as target_file:
   targets = target_file.read().splitlines()
 
 
-def findOrCreateNode(name, thelist, rootnode):
+def findOrCreateNode(name, thelist):
   node = None
   filterres = list(filter(lambda x: x.name == name, thelist))
   if len(filterres) == 0:
@@ -37,38 +35,55 @@ def findOrCreateNode(name, thelist, rootnode):
   return node
 
 
-def buildGraph(rootnode):
+def buildGraph():
   # create nodes
-  allnodes = []
+  allnodes = [Node("0")]
   for key in topology:
     # find out of i already exists
-    current = findOrCreateNode(key, allnodes, rootnode)
+    current = findOrCreateNode(key, allnodes)
     for connection in topology[key]:
       # find node if already exists
-      node = findOrCreateNode(connection, allnodes, rootnode)
+      node = findOrCreateNode(connection, allnodes)
       current.addEdge(node)
 
     allnodes.append(current)
   return allnodes
 
 
-rootnode = Node("0")
-graph = buildGraph(rootnode)
+graph = buildGraph()
 
-resolved = [rootnode.name]
 
-while len(targets) > 0:
-  for t in targets:
-    targetNode = list(filter(lambda x: x.name == t, graph))[0]
-    allEdgedResolved = True
+def dep_resolve(node, resolved):
+  # source: https://www.electricmonk.nl/docs/dependency_resolving_algorithm/dependency_resolving_algorithm.html
+  for edge in node.edges:
+    if edge not in resolved:
+      dep_resolve(edge, resolved)
+  resolved.append(node)
 
-    for edge in targetNode.edges:
-      if edge.name not in resolved:
-        allEdgedResolved = False
-        break
 
-    if allEdgedResolved:
-      resolved.append(t)
-      targets.remove(t)
+def d1(name):
+  resolved = []
+  node = list(filter(lambda x: x.name == name, graph))[0]
+  dep_resolve(node, resolved)
+  return resolved
 
-print(":D")
+
+def d2(targets):
+  resolved = []
+  for name in targets:
+    try:
+      node = list(filter(lambda x: x.name == name, graph))[0]
+      dep_resolve(node, resolved)
+    except:
+      print("something went wrong for " + name)
+  return resolved
+
+
+# node = list(filter(lambda x: x.name == "会", graph))[0]
+res = d2(targets)
+
+print("Whole order:")
+print(list(map(lambda x: x.name, res)))
+
+print("New ones:")
+print(list(filter(lambda x: x not in known, map(lambda x: x.name, res))))
